@@ -5,7 +5,6 @@ code={'00000': 'add', '00001': 'sub', '00010': 'movi', '00011': 'mov', '00100': 
     '01100': 'and', '01101': 'not', '01110': 'cmp', '01111': 'jmp', '11100': 'jlt', '11101': 'jgt',
     '11111': 'je', '11010': 'hlt'}
 
-
 val2={'000': 'R0', '001': 'R1', '010': 'R2', '011': 'R3',
     '100': 'R4', '101': 'R5', '110': 'R6','111':'FLAGS'}
 
@@ -15,33 +14,31 @@ registers = {"add": 2, "sub": 2, "movi":1, "mov": 5,"ld": 1, "st": 1, "mul": 2, 
 val= {2: ['and','sub','mul'], 1: ['ls','movi'], 5: ['cmp','mov'], 4: ['je'], 11: ['hlt']}
 
 register_values={"R0":"0000000000000000","R1":"0000000000000000","R2":"0000000000000000","R3":"0000000000000000",
-                "R4":"0000000000000000","R5":"0000000000000000","R6":"0000000000000000","FLAGS":"0000000000000000"}
+                "R4":"0000000000000000","R5":"0000000000000000","R6":"0000000000000000"} #,"FLAGS":"0000000000000000"
 
 flag_register=['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
 printing_LIST=[]
 global program_counter
 program_counter=0
 
-# file_path = r"C:\Users\PC\Desktop\Assignment\simulator\input1.txt"
+# file_path = r"E:\One Drive\OneDrive - indraprashtha institute of information technology\Practise code\python\Assignment\simulator\input1.txt"
 # f = open(file_path)
 # main_list  =  f.readlines()
 # for i in range(len(main_list)):
 #     if "\n" in main_list[i]:
 #         main_list[i] = main_list[i][:-1]
 
-main_list = []
-
-while (True):
-    try:
-        w = input().strip()
-        main_list.append(w)
-    except EOFError:
-        break
 
 
-# import sys
-# List = sys.stdin.readlines()  # Taking input from STDIN
-# main_list = []  # Main list of all the instructions present in the input file
+
+import sys
+
+def read_content():
+    content = [line.strip() for line in sys.stdin.readlines()]
+    return content
+
+main_list = read_content()
+
 
 # for i in List:
 #     if "\n" in i:
@@ -91,10 +88,16 @@ def subtract(input_string):
     reg1 = val2[input_string[-3:]]
     reg2 = val2[input_string[-6:-3]]
     reg3 = val2[input_string[-9:-6]]
-    value = int((binary_to_decimal(register_values[reg1])) - (binary_to_decimal(register_values[reg2])))
-    if (0 > value or value > 65535):  #(2^n -1)
-        flag_register[-4] = "1"
+    value = int((binary_to_decimal(register_values[reg2])) - (binary_to_decimal(register_values[reg1])))
+    # check = 
+    if (0 > value):  #(2^n -1)
+        # register_values[reg3] = decimal_to_binary(value)
         register_values[reg3]="0000000000000000"
+        flag_register[-4] = "1"
+        flag_register[-3] = "0"
+        flag_register[-2] = "0"
+        flag_register[-1] = "0"
+        
     else:
         register_values[reg3] = decimal_to_binary(value)
         flag_register[-4] = "0"
@@ -109,8 +112,11 @@ def multiply(input_string):
     reg3 = val2[input_string[-9:-6]]
     value = int((binary_to_decimal(register_values[reg1])) * (binary_to_decimal(register_values[reg2])))
     if (0 > value or value > 65535):  #(2^n -1)
-        flag_register[-4] = "1";
+        flag_register[-4] = "1"
         register_values[reg3]="0000000000000000"
+        flag_register[-3] = "0"
+        flag_register[-2] = "0"
+        flag_register[-1] = "0"
     
     else:
         register_values[reg3] = decimal_to_binary(value)
@@ -118,27 +124,27 @@ def multiply(input_string):
         flag_register[-3] = "0"
         flag_register[-2] = "0"
         flag_register[-1] = "0"
+
 
 
 def divide(input_string):
     reg1 = val2[input_string[-3:]]
     reg2 = val2[input_string[-6:-3]]
-    reg3 = val2[input_string[-9:-6]]
-    if (binary_to_decimal(register_values[reg2])) <= 0:
+    if (binary_to_decimal(register_values[reg1])) <= 0:    #cannot divide by 0
         flag_register[-4] = "1"
-        register_values[reg3]="0000000000000000"    
-    
-    else:
-        value = int((binary_to_decimal(register_values[reg1])) / (binary_to_decimal(register_values[reg2])))
-        register_values[reg3] = decimal_to_binary(value)
-        flag_register[-4] = "0"
+        register_values["R0"]="0000000000000000" 
+        register_values["R1"]="0000000000000000" 
         flag_register[-3] = "0"
         flag_register[-2] = "0"
         flag_register[-1] = "0"
     
-        
-        
-    
+    else:
+        register_values["R0"]=decimal_to_binary(int((binary_to_decimal(register_values[reg2])) // (binary_to_decimal(register_values[reg1]))))
+        register_values["R1"]=decimal_to_binary(int((binary_to_decimal(register_values[reg2])) % (binary_to_decimal(register_values[reg1]))))
+        flag_register[-4] = "0"
+        flag_register[-3] = "0"
+        flag_register[-2] = "0"
+        flag_register[-1] = "0"
     
 def addition(input):
     reg1 = input[-3 : ]
@@ -148,12 +154,16 @@ def addition(input):
     lst.append(val2[reg1])
     lst.append(val2[reg2])
     lst.append(val2[reg3])
+    # print("HI",lst[1])
     reg_val1 = binary_to_decimal(register_values[lst[0]])
     reg_val2 = binary_to_decimal(register_values[lst[1]])
     reg_val3 = reg_val1 + reg_val2
     if (0 > reg_val3 or reg_val3 > 65535):
         flag_register[-4] = "1"
         register_values[reg3]="0000000000000000"
+        flag_register[-3] = "0"
+        flag_register[-2] = "0"
+        flag_register[-1] = "0"
 
     else:
         register_values[lst[2]] = decimal_to_binary(reg_val3)
@@ -171,7 +181,12 @@ def movRegister(input):
     lst.append(val2[reg2])
     
     if (reg1 == "111"):
-        register_values[lst[1]] = "".join(flag_register)
+        string = ""
+        
+        for i in flag_register:
+            string += i
+            
+        register_values[lst[1]] = string
         return
     
     register_values[lst[1]] = register_values[lst[0]]
@@ -198,12 +213,21 @@ def compare(input):
 
     if(reg1_value > reg2_value):
         flag_register[-3] = "1"
+        flag_register[-4] = "0"
+        flag_register[-2] = "0"
+        flag_register[-1] = "0"
 
     elif(reg2_value > reg1_value):
         flag_register[-2] = "1"
+        flag_register[-3] = "0"
+        flag_register[-4] = "0"
+        flag_register[-1] = "0"
 
     else:
         flag_register[-1] = "1"
+        flag_register[-3] = "0"
+        flag_register[-2] = "0"
+        flag_register[-4] = "0"
 
 def load(data):
     imm = str(data[-7:])
@@ -229,7 +253,7 @@ def Right_shift(data):
     binary_reg =register_values[val2[Reg]]
     
     for i in range(decimal_imm):
-        binary_reg = binary_reg[1:] + binary_reg[0]
+        binary_reg = "0" + binary_reg[:-1] 
         
     register_values[val2[Reg]] = binary_reg
     
@@ -242,7 +266,7 @@ def Left_shift(data):
     binary_reg =register_values[val2[Reg]]
     
     for i in range(decimal_imm):
-        binary_reg =  binary_reg[-1] + binary_reg[:-1]
+        binary_reg =  binary_reg[1:] + "0"
         
     register_values[val2[Reg]] = binary_reg
     
@@ -324,33 +348,24 @@ def unconditional_jump(data):
 def jump_if_less(data,program_counter):
     imm = str(data[-7:])
     decimal_imm = binary_to_decimal(imm)
-    if (flag_register[-3] == 1):
-        if decimal_imm < program_counter:
-            return program_counter
-        else:
-            return decimal_imm
+    if (flag_register[-3] == "1"):
+        return decimal_imm
     else:
         return program_counter
     
 def jump_if_greater(data,program_counter):
     imm = str(data[-7:])
     decimal_imm = binary_to_decimal(imm)
-    if (flag_register[-2] == 1):
-        if decimal_imm < program_counter:
-            return program_counter
-        else:
-            return decimal_imm
+    if (flag_register[-2] == "1"):
+        return decimal_imm
     else:
         return program_counter
     
 def jump_if_equal(data,program_counter):
     imm = str(data[-7:])
     decimal_imm = binary_to_decimal(imm)
-    if (flag_register[-1] == 1):
-        if decimal_imm < program_counter:
-            return program_counter
-        else:
-            return decimal_imm
+    if (flag_register[-1] == "1"):
+        return decimal_imm
     else:
         return program_counter
 
@@ -504,19 +519,19 @@ while (j < len(main_list)):
 
     elif(s=='00010'):
         movImmediate(i)
-        flag_register = ['0' for j in range(16)]
+        # flag_register = ['0' for j in range(16)]
 
     elif(s=='00011'):
         movRegister(i)
-        flag_register = ['0' for j in range(16)]
+        # flag_register = ['0' for j in range(16)]
 
     elif(s=='00100'):
         load(i)
-        flag_register = ['0' for j in range(16)]
+        # flag_register = ['0' for j in range(16)]
 
     elif(s=='00101'):
         store(i)
-        flag_register = ['0' for j in range(16)]
+        # flag_register = ['0' for j in range(16)]
         
     elif(s=='00110'):
         multiply(i)
@@ -554,30 +569,34 @@ while (j < len(main_list)):
     elif(s=='01111'):
         program_counter = unconditional_jump(i)
         flag_register = ['0' for j in range(16)]
+        if (j != program_counter):
+            check = 1
+        else:
+            check = 0
         
     elif(s=='11100'):
         program_counter = jump_if_less(i,program_counter)
         flag_register = ['0' for j in range(16)]
         if (j != program_counter):
-            check == 1
+            check = 1
         else:
-            check == 0
+            check = 0
         
     elif(s=='11101'):
         program_counter = jump_if_greater(i,program_counter)
         flag_register = ['0' for j in range(16)]
         if (j != program_counter):
-            check == 1
+            check = 1
         else:
-            check == 0
+            check = 0
         
     elif(s=='11111'):
         program_counter = jump_if_equal(i,program_counter)
         flag_register = ['0' for j in range(16)]
         if (j != program_counter):
-            check == 1
+            check = 1
         else:
-            check == 0
+            check = 0
         
     elif(s=='11010'):
         flag_register = ['0' for j in range(16)]
@@ -597,7 +616,7 @@ while (j < len(main_list)):
         a = 1
         
     string = ""
-    string += str(program_counter_binary_handler(program_counter))
+    string += str(program_counter_binary_handler(j))
     string += "        "
 
     for i in register_values:
@@ -606,7 +625,7 @@ while (j < len(main_list)):
         
     string += "".join(i for i in flag_register)
     printing_LIST.append(string)
-    print(string)
+    # print(string)
 
     # print(program_counter , j)
     if (check == 0):
@@ -623,23 +642,24 @@ while (j < len(main_list)):
 #     for i in printing_LIST:         #Printing the binary list line by line into the needed file.
 #         f.write(i)
 #         f.write("\n")
-#     for i in range(128):
+#     for i in range(127):
 #         f.write(Memory[i])
 #         f.write("\n")
 #     f.close()
 
+# print("Done")
 
 # print(printing_LIST)
-#for i in printing_LIST:
-#   print(i)
+# for i in printing_LIST:
+#     print(i)
+# for i in range(128):
+#     print(Memory[i])◘
+import sys
+
+for i in printing_LIST:         #Printing the binary list line by line into the needed file.
+    sys.stdout.write(i)
+    sys.stdout.write("\n")
     
 for i in range(128):
-    print(Memory[i])
-
-
-# for i in printing_LIST:         #Printing the binary list line by line into the needed file.
-#     sys.stdout.write(i)
-#     sys.stdout.write("\n")
-# for i in range(128):
-#     sys.stdout.write(Memory[i])
-#     sys.stdout.write("\n")
+    sys.stdout.write(Memory[i])
+    sys.stdout.write("\n")
